@@ -1,0 +1,26 @@
+---
+
+- name: Check if project directory exists for Backend
+  stat:
+    path: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create directory for Backend
+  file:
+    path: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    state: directory
+    mode: 0755
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Pull from Bitbucket for Backend
+  git:
+    repo: "{{ item.1.backend.git.repo }}"
+    dest: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}"
+    version: "{{ item.1.backend.git.branch }}"
+    force: yes
+    update: yes
+    accept_hostkey: yes
+    key_file: "{{ ssh_key }}"
+  loop: "{{ services|subelements('environments') }}"

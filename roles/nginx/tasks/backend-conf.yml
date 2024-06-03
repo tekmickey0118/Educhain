@@ -1,0 +1,10 @@
+---
+
+- name: Create backend.conf file from templates
+  template:
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0700
+    src: "{{ item.0.name }}-backend.conf.j2"
+    dest: "{{ webdocker }}/nginx/conf.d/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}.conf"
+  loop: "{{ services|subelements('environments') }}"

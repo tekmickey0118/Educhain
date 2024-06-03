@@ -1,0 +1,37 @@
+server {
+    server_name {{ item.1.nginx.front_server_name }} www.{{ item.1.nginx.front_server_name }};
+
+    listen 80;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    server_name {{ item.1.nginx.front_server_name }};
+    ssl_certificate /etc/nginx/certs/{{ item.1.nginx.ssl_certificate }};
+    ssl_certificate_key /etc/nginx/certs/{{ item.1.nginx.ssl_key }};
+    listen 443 ssl;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_tickets off;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    ssl_ciphers 'EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDSHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA LL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS +RC4 RC4';
+
+    location / {
+      proxy_pass http://host.docker.internal:{{ item.1.frontend.port[item.0.name] }};
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection 'upgrade';
+      proxy_set_header Host $host;
+      proxy_cache_bypass $http_upgrade;
+    }
+
+    location ~ /.git/ {
+        deny all;
+    }
+
+    error_log /var/log/nginx/ap-frontend-{{ item.1.name }}.educhain.io_error.log;
+    access_log /var/log/nginx/ap-frontend-{{ item.1.name }}.educhain.io_access.log;
+}

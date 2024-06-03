@@ -1,0 +1,5 @@
+---
+# vars file for prerequisites
+
+space_threshold_gb: "20"
+pkg_list: ["htop", "tree", "remake", "php-fpm"]

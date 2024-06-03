@@ -1,0 +1,23 @@
+---
+
+- name: Create nginx.conf file for nginx
+  template:
+    src: nginx.conf.j2
+    dest: "{{ webdocker }}/nginx.conf"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0700
+
+- name: Check if conf.d folder directory exists in {{ webdocker }}/nginx
+  stat:
+    path: "{{ webdocker }}/nginx/conf.d"
+  register: project_dir
+
+- name: Create {{ webdocker }}/nginx/conf.d directory
+  file:
+    path: "{{ webdocker }}/nginx/conf.d"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0755
+  when: not project_dir.stat.exists

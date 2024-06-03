@@ -1,0 +1,4 @@
+---
+# tasks file for roles/common
+
+- ansible.builtin.include_tasks: create_folders.yml

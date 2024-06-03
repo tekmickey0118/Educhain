@@ -1,0 +1,71 @@
+---
+
+- name: Run remake rebuild
+  command:
+    cmd: 'remake rebuild'
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    RUN_NEXT_JS: 'false'
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remake exect node 'yarn install'
+  command:
+    cmd: "remake exect node 'yarn install'"
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remake exect node 'yarn theme'
+  command:
+    cmd: "remake exect node 'yarn theme -p {{ item.0.name }} -t {{ item.1.frontend.theme }} -c false'"
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  when: item.0.name != 'verify'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remake exect node 'yarn theme'
+  command:
+    cmd: "remake exect node 'yarn theme -p {{ item.0.name }} -t {{ item.1.frontend.theme }}'"
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  when: item.0.name == 'verify'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remake exect node 'yarn build'
+  command:
+    cmd: "remake exect node 'yarn build:{{ item.0.name }}'"
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remove -rf build folder for Verify.
+  command:
+    cmd: "rm -rf /var/www/verify-frontend-{{ item.1.name }}/build"
+  when: item.0.name == 'verify'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run move build folder for Verify.
+  command:
+    cmd: "mv /var/www/verify-frontend-{{ item.1.name }}/packages/verify/build /var/www/verify-frontend-{{ item.1.name }}/"
+  when: item.0.name == 'verify'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run remake rebuild
+  command:
+    cmd: 'remake rebuild'
+    chdir: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+  when: item.0.name != 'verify'
+  environment:
+    ENVIRONMENT_ENVIRONMENT: "{{ item.1.frontend.env }}"
+    ENVIRONMENT_USER: "{{ app_uid }}:{{ app_uid }}"
+  loop: "{{ services|subelements('environments') }}"

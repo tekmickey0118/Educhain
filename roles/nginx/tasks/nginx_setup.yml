@@ -1,0 +1,10 @@
+---
+
+- name: Include tasks from conf.yml
+  include_tasks: tasks/conf.yml
+
+- name: Include tasks from frontend-conf.yml
+  include_tasks: tasks/frontend-conf.yml
+
+- name: Include tasks from backend-conf.yml
+  include_tasks: tasks/backend-conf.yml

@@ -1,0 +1,5 @@
+---
+
+- ansible.builtin.include_tasks: tasks/pull_project.yml
+- ansible.builtin.include_tasks: tasks/env_setup.yml
+- ansible.builtin.include_tasks: tasks/frontend_build.yml

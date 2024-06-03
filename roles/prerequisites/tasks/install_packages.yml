@@ -1,0 +1,92 @@
+---
+- name: Remove existing Docker installations
+  become: true
+  apt:
+      name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+      state: absent
+
+- name: Wait for APT Lock
+  become: true
+  shell: while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+
+- name: install dependencies
+  become: true
+  apt:
+      name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+      state: present
+
+- name: Add GPG
+  become: true
+  apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+- name: Get Ubuntu codename
+  command: lsb_release -cs
+  register: ubuntu_codename
+  changed_when: false
+
+- name: Add docker repository
+  become: true
+  apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable
+      state: present
+
+- name: Installing docker-ce=5:20.10.17~3-0~ubuntu-bionic docker-ce-cli=5:19.03.15~3-0~ubuntu-bionic containerd.io
+  become: true
+  apt:
+      name: "{{ packages }}"
+      state: present
+  vars:
+      packages:
+          - docker-ce=5:20.10.17~3-0~ubuntu-{{ ubuntu_codename.stdout }}
+          - docker-ce-cli=5:20.10.17~3-0~ubuntu-{{ ubuntu_codename.stdout }}
+          - containerd.io
+
+- name: Make sure docker is active
+  become: true
+  service:
+      name: docker
+      state: started
+      enabled: yes
+
+- name: Download Docker Compose V2
+  become: true
+  get_url:
+      url: "https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-linux-x86_64"
+      dest: /usr/local/bin/docker-compose
+      mode: "0755"
+
+- name: Create Symbolic Link for Docker Compose V2
+  become: true
+  file:
+      src: /usr/local/bin/docker-compose
+      dest: /usr/bin/docker-compose
+      state: link
+
+- name: Check Docker Compose version
+  command: docker-compose version
+  register: docker_compose_version
+
+- debug:
+      var: docker_compose_version.stdout_lines
+
+- name: Install packages on Ubuntu
+  become: true
+  apt:
+      name:
+          - htop
+          - tree
+          - remake
+          - php-fpm
+
+      state: latest

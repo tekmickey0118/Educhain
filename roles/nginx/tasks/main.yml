@@ -1,0 +1,5 @@
+---
+# tasks file for nginx
+
+- ansible.builtin.include_tasks: tasks/nginx_setup.yml
+- ansible.builtin.include_tasks: tasks/certs.yml

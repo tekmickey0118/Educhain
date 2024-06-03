@@ -1,0 +1,10 @@
+---
+- ansible.builtin.include_tasks: check_hdd_space.yml
+
+- ansible.builtin.include_tasks: install_packages.yml
+
+- ansible.builtin.include_tasks: create_user_educhain.yml
+
+- ansible.builtin.include_tasks: check_sudo_access.yml
+
+- ansible.builtin.include_tasks: setting_ssh.yml

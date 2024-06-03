@@ -1,0 +1,27 @@
+server {
+    server_name {{ item.1.nginx.front_server_name }};
+    ssl_certificate /etc/nginx/certs/{{ item.1.nginx.ssl_certificate }};
+    ssl_certificate_key /etc/nginx/certs/{{ item.1.nginx.ssl_key }};
+    listen 443 ssl;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_tickets off;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    ssl_ciphers 'EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDSHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA LL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS +RC4 RC4';
+
+    root /var/www/{{ item.0.name }}-frontend-{{ item.1.name }}/build;
+
+    location / {
+        try_files $uri /index.html =404;
+    }
+
+    location ~ /.git/ {
+        deny all;
+    }
+
+    error_log /var/log/nginx/verification-{{ item.1.name }}_error.log;
+    access_log /var/log/nginx/verification-{{ item.1.name }}_access.log;
+}

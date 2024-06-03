@@ -1,0 +1,13 @@
+FROM educhain1/publisher-php-fpm:{{ item.1.php_version }}
+
+USER root
+ENV TZ="UTC"
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && groupmod -g 1010 user \
+    && usermod -u 1010 -g 1010 user \
+    &&  mkdir -m 775 /home/user/.ssh && ln -s /run/secrets/host_ssh_key /home/user/.ssh/deploy.pem && ln -s /run/secrets/host_ssh_config /home/user/.ssh/config
+
+COPY php-fpm.conf /etc/php-fpm.conf
+COPY ./docker-php-ext.ini /usr/local/etc/php/conf.d/
+
+USER user

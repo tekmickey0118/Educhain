@@ -1,0 +1,29 @@
+---
+
+- name: Create group
+  become: true
+  group:
+    name: "{{ app_group }}"
+    gid: "{{ app_uid }}"
+    
+- name: Create user
+  become: true
+  user:
+    name: "{{ app_user }}"
+    uid: "{{ app_uid }}"
+    group: "{{ app_group }}"
+    groups: sudo,docker
+    home: "{{ app_root }}"
+    shell: "/bin/bash"
+    password: "{{ app_passwd | password_hash('sha512') }}"
+  register: result
+
+- name: Check user {{ app_user }} creation
+  debug:
+    msg: "User {{ app_user }} created successfully"
+  when: result.changed
+  
+- name: Error message for {{ app_user }} creation
+  debug:
+    msg: "User {{ app_user }} creation failed"
+  when: not result.changed

@@ -1,0 +1,223 @@
+services:
+  - name: publisher
+    environments:
+      - name: test-ud
+        php_version: 8.2
+        frontend:
+          git:      
+            repo: git@bitbucket.org:educhaininc/educhain_mypassport_frontend.git
+            branch: develop
+          port:
+            publisher: 3006
+            passport: 3001
+          env: dev
+          theme: educhain
+          publisher_url: publisher-deployment.educhain.io
+          passport_url: ap-deployment.educhain.io
+          verify_url: vp-deployment.educhain.io 
+        backend:
+          git:      
+            repo: git@bitbucket.org:educhaininc/registrar_app.git
+            branch: develop
+          port: 9000
+          publisher_url: api-publisher-deployment.educhain.io 
+          passport_url: api-ap-deployment.educhain.io
+          verify_url: api-vp-deployment.educhain.io
+        rabbitmq:
+          enabled: true
+          user: publisher
+          password: NyvD2z9uLTHL
+          delay: 180000
+        mysql:
+          enabled: false
+          root_password: XyGmc7QNJmJdFb3
+          user_u: publisher-user
+          database_u: publisher-test
+          password_u: LR4HJ6k8y5m6
+          port_u: 3306
+          user:
+            publisher: publisher-user
+            passport: ap-user
+            verify: verification
+          password:
+            publisher: LR4HJ6k8y5m6
+            passport: gtzpYM9YkLm6Gu4
+            verify: EyYtjs79qw6MRAo
+          database:
+            publisher: publisher-test
+            passport: ap-prod
+            verify: verification-test
+          port:
+            publisher: 3306
+            passport: 3309
+            verify: 3330 
+        nginx:
+          front_server_name: publisher-deployment.educhain.io
+          server_name: api-publisher-deployment.educhain.io
+          ssl_certificate: wild-educhain-io.crt
+          ssl_key: wild-educhain-io.key
+        php:
+          date_timezone: Asia/Dubai
+        parameters:
+          recaptcha_key: 6Lc5o5IUAAAAAALM8TdEQJxGCG8eVmz5KP5R14E9
+          use_rtl: true
+          hide_badges: false
+          ga_token_id:
+            publisher:
+            passport: G-3BJ50PSPYJ
+            verify: G-7NFEG0DCK7
+          login:
+            plain:
+              publisher: true
+              passport: true
+            sso:
+              publisher: false
+              passport: https://api-ap-deployment.educhain.io/saml/login?RelayState=https://api-ap-deployment.educhain.io/en/oauth
+  - name: passport
+    environments:
+      - name: test-ud
+        php_version: 8.2
+        frontend:
+          git:
+            repo: git@bitbucket.org:educhaininc/educhain_mypassport_frontend.git
+            branch: develop
+          port:
+            publisher: 3007
+            passport: 3002
+          env: dev
+          theme: educhain
+          publisher_url: publisher-deployment.educhain.io
+          passport_url: ap-deployment.educhain.io
+          verify_url: vp-deployment.educhain.io 
+        backend:
+          git:
+            repo: git@bitbucket.org:educhaininc/educhain_mypassport.git
+            branch: develop
+          port: 9000
+          publisher_url: api-publisher-deployment.educhain.io 
+          passport_url: api-ap-deployment.educhain.io
+          verify_url: api-vp-deployment.educhain.io
+        rabbitmq:
+          enabled: true
+          user: publisher
+          password: NyvD2z9uLTHL
+          delay: 180000
+        mysql:
+          enabled: false
+          root_password: MCTsabkJkqJ3zG7
+          user_u: ap-user
+          database_u: ap-prod
+          password_u: gtzpYM9YkLm6Gu4
+          port_u: 3309
+          user:
+            publisher: publisher-user
+            passport: ap-user
+            verify: verification
+          password:
+            publisher: LR4HJ6k8y5m6
+            passport: gtzpYM9YkLm6Gu4
+            verify: EyYtjs79qw6MRAo
+          database:
+            publisher: publisher-test
+            passport: ap-prod
+            verify: verification-test
+          port:
+            publisher: 3306
+            passport: 3309
+            verify: 3330 
+        nginx:
+          front_server_name: ap-deployment.educhain.io
+          server_name: api-ap-deployment.educhain.io
+          ssl_certificate: wild-educhain-io.crt
+          ssl_key: wild-educhain-io.key
+        php:
+          date_timezone: Asia/Dubai
+        parameters:
+          recaptcha_key: 6Lc5o5IUAAAAAALM8TdEQJxGCG8eVmz5KP5R14E9
+          use_rtl: true
+          hide_badges: false
+          ga_token_id:
+            publisher:
+            passport: G-3BJ50PSPYJ
+            verify: G-7NFEG0DCK7
+          login:
+            plain:
+              publisher: true
+              passport: true
+            sso:
+              publisher: false
+              passport: https://api-ap-deployment.educhain.io/saml/login?RelayState=https://api-ap-deployment.educhain.io/en/oauth
+  - name: verify
+    environments:
+      - name: test-ud
+        php_version: 8.2
+        frontend:
+          git:
+            repo: git@bitbucket.org:educhaininc/educhain_mypassport_frontend.git
+            branch: develop
+          port:
+            publisher: 3008
+            passport: 3003
+          env: prod
+          theme: educhain
+          publisher_url: publisher-deployment.educhain.io
+          passport_url: ap-deployment.educhain.io
+          verify_url: vp-deployment.educhain.io
+        backend:
+          git:
+            repo: git@bitbucket.org:educhaininc/verification_on_symfony.git
+            branch: develop
+          port: 9000
+          publisher_url: api-publisher-deployment.educhain.io 
+          passport_url: api-ap-deployment.educhain.io
+          verify_url: api-vp-deployment.educhain.io
+        rabbitmq:
+          enabled: true
+          user: publisher
+          password: NyvD2z9uLTHL
+          delay: 180000
+        mysql:
+          enabled: false
+          root_password: kbtdTYf7GgfAgkU
+          user_u: verification
+          database_u: verification-test
+          password_u: EyYtjs79qw6MRAo
+          port_u: 3330
+          user:
+            publisher: publisher-user
+            passport: ap-user
+            verify: verification
+          password:
+            publisher: LR4HJ6k8y5m6
+            passport: gtzpYM9YkLm6Gu4
+            verify: EyYtjs79qw6MRAo
+          database:
+            publisher: publisher-test
+            passport: ap-prod
+            verify: verification-test
+          port:
+            publisher: 3306
+            passport: 3309
+            verify: 3330 
+        nginx:
+          front_server_name: vp-deployment.educhain.io
+          server_name: api-vp-deployment.educhain.io
+          ssl_certificate: wild-educhain-io.crt
+          ssl_key: wild-educhain-io.key
+        php:
+          date_timezone: UTC
+        parameters:
+          recaptcha_key: 6Lc5o5IUAAAAAALM8TdEQJxGCG8eVmz5KP5R14E9
+          use_rtl: true
+          hide_badges: false
+          ga_token_id:
+            publisher:
+            passport: G-3BJ50PSPYJ
+            verify: G-7NFEG0DCK7
+          login:
+            plain:
+              publisher: true
+              passport: true
+            sso: 
+              publisher: false
+              passport: https://api-ap-deployment.educhain.io/saml/login?RelayState=https://api-ap-deployment.educhain.io/en/oauth

@@ -1,0 +1,94 @@
+version: '3.7'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+{% for service in services %}
+{% for environment in service.environments %}
+{% if service.name == 'verify' %}
+      - {{ app_root }}/api-{{ service.name }}-{{ environment.name }}:{{ app_root }}/api-{{ service.name }}-{{ environment.name }}
+      - {{ app_root }}/{{ service.name }}-frontend-{{ environment.name }}/:{{ app_root }}/{{ service.name }}-frontend-{{ environment.name }}
+{% elif service.name == 'passport' %}
+      - {{ app_root }}/ap-frontend-{{ environment.name }}/:{{ app_root }}/ap-frontend-{{ environment.name }}
+      - {{ app_root }}/ap-backend-{{ environment.name }}/:{{ app_root }}/ap-backend-{{ environment.name }}
+{% else %}
+      - {{ app_root }}/api-{{ service.name }}-{{ environment.name }}:{{ app_root }}/api-{{ service.name }}-{{ environment.name }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+      - {{ webdocker }}/nginx.conf:/etc/nginx/nginx.conf
+      - {{ webdocker }}/nginx/conf.d:/etc/nginx/conf.d
+      - {{ app_root }}/certs:/etc/nginx/certs
+    entrypoint:
+      - /bin/sh
+      - -c
+      - echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && apt update && apt install -y iproute2 && echo "`/sbin/ip route|grep default | cut -d ' ' -f3` host.docker.internal" | tee -a /etc/hosts > /dev/null && nginx -g "daemon off;"
+
+{% for service in services %}
+{% for environment in service.environments %}
+  php-{{ (service.name == 'passport') | ternary('ap-backend', service.name) }}-{{ environment.name }}:
+    build: "{{ php_fpm }}/{{ (service.name == 'passport') | ternary('ap-backend', 'api-' + service.name) }}-{{ environment.name }}/"
+    restart: always
+    volumes:
+      - {{ app_root }}/{{ (service.name == 'passport') | ternary('ap-backend', 'api-' + service.name) }}-{{ environment.name }}:{{ app_root }}/{{ (service.name == 'passport') | ternary('ap-backend', 'api-' + service.name) }}-{{ environment.name }}/
+    working_dir: {{ app_root }}/{{ (service.name == 'passport') | ternary('ap-backend', 'api-' + service.name) }}-{{ environment.name }}/
+    secrets:
+      - source: host_ssh_key
+        target: /home/user/.ssh/deploy.pem
+      - source: host_ssh_config
+        target: /home/user/.ssh/config
+
+{% endfor %}
+{% endfor %}
+
+{% for service in services %}
+{% for environment in service.environments %}
+  mysql-{{ (service.name == 'passport') | ternary('ap-backend', service.name) }}-{{ environment.name }}:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - {{ environment.mysql.port_u }}:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: {{ environment.mysql.root_password }}
+      MYSQL_DATABASE: {{ environment.mysql.database_u }}
+      MYSQL_USER: {{ environment.mysql.user_u }}
+      MYSQL_PASSWORD: {{ environment.mysql.password_u }}
+    volumes:
+      - {{ app_root }}/mysql/{{ (service.name == 'passport') | ternary('ap-backend', 'api-' + service.name) }}-{{ environment.name }}:/var/lib/mysql
+
+{% endfor %}
+{% endfor %}
+
+{% for service in services %}
+{% for environment in service.environments %}
+{% if service.name != 'passport' and service.name != 'verify' %}
+  rabbitmq-{{ service.name }}-{{ environment.name }}:
+    build: rabbitmq/
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: {{ environment.rabbitmq.user }}
+      RABBITMQ_DEFAULT_PASS: {{ environment.rabbitmq.password }}
+
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+{% for service in services %}
+{% for environment in service.environments %}
+{% if service.name == 'verify' %}
+  clamav:
+    image: mkodockx/docker-clamav
+    restart: always
+
+{% endif %}
+{% endfor %}
+{% endfor %}
+          
+secrets:
+  host_ssh_key:
+    file: {{ app_root }}/.ssh/deploy.pem
+  host_ssh_config:
+    file: {{ app_root }}/.ssh/config

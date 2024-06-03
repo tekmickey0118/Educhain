@@ -1,0 +1,35 @@
+---
+
+- name: Login to Docker
+  docker_login:
+    username: "{{ docker_certs.username }}"
+    password: "{{ docker_certs.password }}"
+
+- name: Ensure directories exist for each environment key
+  file:
+    path: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create project directories
+  file:
+    path: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Pull projects from Bitbucket
+  git:
+    repo: "{{ item.1.frontend.git.repo }}"
+    dest: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-frontend', item.0.name + '-frontend') }}-{{ item.1.name }}"
+    version: "{{ item.1.frontend.git.branch }}"
+    force: yes
+    accept_hostkey: yes
+    update: yes
+    key_file: "/home/{{ app_root }}/.ssh/deploy.pem"
+  loop: "{{ services|subelements('environments') }}"

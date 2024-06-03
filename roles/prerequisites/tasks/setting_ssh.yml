@@ -1,0 +1,32 @@
+---
+
+- name: Create .ssh directory if it doesn't exist
+  become: true
+  file:
+    path: "{{ ssh }}"
+    state: directory
+    mode: '0700'
+
+- name: Copy public key to the managed node
+  become: true
+  authorized_key:
+    user: "{{ app_user }}"
+    state: present
+    key: "{{ lookup('file', '{{ control_ssh }}/id_rsa.pub') }}"
+
+- name: Copy deploy.pem file to the managed node
+  become: true
+  copy:
+    src: "{{ control_ssh }}/deploy.pem"
+    dest: "{{ ssh }}/deploy.pem"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0600'
+
+- name: Create config file to the managed node
+  become: true
+  template:
+    src: config.j2
+    dest: "{{ ssh }}/config"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"

@@ -1,0 +1,15 @@
+- name: Check if directories exist
+  stat:
+    path: "{{ item }}"
+  loop: "{{ directories }}"
+  register: directory_statuses
+
+- name: Create directories
+  file:
+    path: "{{ item.item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop: "{{ directory_statuses.results }}"
+  when: item.stat.exists == False

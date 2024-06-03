@@ -1,0 +1,16 @@
+---
+
+- name: Check if user has sudo access
+  command: sudo -n true
+  register: sudo_output
+  ignore_errors: true
+
+- name: Print success message
+  debug:
+    msg: "Success, the user has sudo access."
+  when: sudo_output.rc == 0
+
+- name: Print error message
+  fail:
+    msg: "Error, the user does not have sudo access."
+  when: sudo_output.rc != 0

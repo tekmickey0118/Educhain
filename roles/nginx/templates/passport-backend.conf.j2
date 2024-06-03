@@ -1,0 +1,61 @@
+server {
+    server_name {{ item.1.nginx.server_name }};
+
+    listen 80;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    server_name {{ item.1.nginx.server_name }};
+    ssl_certificate /etc/nginx/certs/{{ item.1.nginx.ssl_certificate }};
+    ssl_certificate_key /etc/nginx/certs/{{ item.1.nginx.ssl_key }};
+    listen 443 ssl;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:20m;
+    ssl_session_tickets off;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    
+    ssl_ciphers 'EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDSHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA LL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS +RC4 RC4';
+
+    root /var/www/ap-backend-{{ item.1.name }}/web;
+
+    location / {
+        # try to serve file directly, fallback to app.php
+        try_files $uri /app.php$is_args$args;
+    }
+
+    location ~ /.git/ {
+        deny all;
+    }
+
+    # PROD
+    location ~ ^/app\.php(/|$) {
+        fastcgi_pass webdocker-php-ap-backend-{{ item.1.name }}-1:{{ item.1.backend.port }};
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        # MIME type sniffing protection
+        add_header X-Content-Type-Options nosniff;
+        # MITM protection
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        # When you are using symlinks to link the document root to the
+        # current version of your application, you should pass the real
+        # application path instead of the path to the symlink to PHP
+        # FPM.
+        # Otherwise, PHP's OPcache may not properly detect changes to
+        # your PHP files (see https://github.com/zendtech/ZendOptimizerPlus/issues/126
+        # for more information).
+        fastcgi_param  SCRIPT_FILENAME  $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        # Prevents URIs that include the front controller. This will 404:
+        # http://symfony3.dev/app.php/some-path
+        # Remove the internal directive to allow URIs like this
+        internal;
+#        add_header 'Access-Control-Allow-Origin' '*';
+#        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept';
+    }
+
+    error_log /var/log/nginx/ap-backend-{{ item.1.name }}_error.log;
+    access_log /var/log/nginx/ap-backend-{{ item.1.name }}_access.log;
+}

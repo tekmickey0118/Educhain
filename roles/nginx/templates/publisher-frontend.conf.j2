@@ -1,0 +1,20 @@
+server {
+
+    server_name {{ item.1.nginx.front_server_name }} www.{{ item.1.nginx.front_server_name }};
+
+    listen 443 ssl;
+    ssl_certificate /etc/nginx/certs/{{ item.1.nginx.ssl_certificate }};
+    ssl_certificate_key /etc/nginx/certs/{{ item.1.nginx.ssl_key }};
+
+    location / {
+        proxy_pass http://host.docker.internal:{{ item.1.frontend.port[item.0.name] }};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    error_log /var/log/nginx/{{ item.0.name }}-publisher-{{ item.1.name }}.educhain.io_error.log;
+    access_log /var/log/nginx/{{ item.0.name }}-publisher-{{ item.1.name }}.educhain.io_access.log;
+}

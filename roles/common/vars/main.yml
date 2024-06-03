@@ -1,0 +1,4 @@
+---
+# vars file for roles/common
+
+directories: ['/var/www/webdocker', '/var/www/backup', '/var/www/sync']

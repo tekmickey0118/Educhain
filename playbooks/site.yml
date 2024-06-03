@@ -1,0 +1,34 @@
+---
+# Setting up Dynamic Inventory file for Playbook
+- name: Dynamic Inventory Setup Playbook
+  hosts: localhost
+  gather_facts: no
+  tasks:
+      - name: Add a new host and set variables
+        add_host:
+            name: 18.222.124.244
+            groups: ansibleDeployServer
+
+# Run prerequisites scripts with Ubuntu
+- hosts: ansibleDeployServer
+  remote_user: ubuntu
+  connection: ssh
+  vars_files:
+      - ../group_vars/all.yml
+  roles:
+      - ../roles/prerequisites
+
+# Run prerequisites scripts with
+- hosts: ansibleDeployServer
+  remote_user: educhain
+  connection: ssh
+  vars_files:
+      - ../group_vars/all.yml
+      - ../group_vars/config.yml
+  roles:
+      - ../roles/common
+      - ../roles/frontend
+      - ../roles/database
+      - ../roles/backend
+      - ../roles/nginx
+      - ../roles/docker

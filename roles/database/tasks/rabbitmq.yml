@@ -1,0 +1,22 @@
+---
+
+- name: Check if {{ webdocker }}/rabbitmq directory exists
+  stat:
+    path: "{{ webdocker }}/rabbitmq"
+  register: webdocker_dir
+
+- name: Create {{ webdocker }}/rabbitmq directory
+  file:
+    path: "{{ webdocker }}/rabbitmq"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  when: not webdocker_dir.stat.exists
+
+- name: Create webdocker dockerfile
+  template:
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    src: rabbitmq_dockerfile.j2
+    dest: "{{ webdocker }}/rabbitmq/Dockerfile"

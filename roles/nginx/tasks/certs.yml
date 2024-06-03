@@ -1,0 +1,33 @@
+---
+
+- name: Check if cert folder directory exists in {{ app_root }}
+  stat:
+    path: "{{ app_root }}/certs"
+  register: ssh_dir
+
+- name: Create {{ app_root }}/certs directory
+  file:
+    path: "{{ app_root }}/certs"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0700
+  when: not ssh_dir.stat.exists
+
+- name: Copy nginx.crt file
+  copy:
+    src: "{{ control_certs }}/{{ item.1.nginx.ssl_certificate }}"
+    dest: "{{ app_root }}/certs/{{ item.1.nginx.ssl_certificate }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0600
+  loop: "{{ services|subelements('environments') }}"
+    
+- name: Copy nginx.key file
+  copy:
+    src: "{{ control_certs }}/{{ item.1.nginx.ssl_key }}"
+    dest: "{{ app_root }}/certs/{{ item.1.nginx.ssl_key }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0600
+  loop: "{{ services|subelements('environments') }}"

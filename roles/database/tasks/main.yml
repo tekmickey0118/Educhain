@@ -1,0 +1,7 @@
+---
+# tasks file for database
+
+- name: Check service name and include tasks
+  ansible.builtin.include_tasks: tasks/rabbitmq.yml
+  when: item.name != 'passport' and item.name != 'verify'
+  loop: "{{ services }}"

@@ -1,0 +1,16 @@
+---
+
+- name: Get available disk space
+  shell: "df --output=avail -BG / | tail -n1 | awk '{print $1}'"
+  register: disk_space
+  changed_when: false
+
+- name: Set available disk space fact
+  set_fact:
+    available_disk_space_gb: "{{ disk_space.stdout[:-1]|int }}"
+
+- name: Check if available disk space is below the threshold
+  fail:
+    msg: "Error: Available HDD space ({{ available_disk_space_gb }} GB) is less than the threshold ({{ space_threshold_gb }} GB)"
+  when: available_disk_space_gb < space_threshold_gb
+  ignore_errors: true

@@ -1,0 +1,52 @@
+- name: Create docker-compose file from templates
+  template:
+      src: docker-compose.j2
+      dest: /var/www/webdocker/docker-compose.yml
+
+- name: Run docker Clamav
+  shell: "docker-compose -f {{ webdocker }}/docker-compose.yml up -d clamav"
+
+- name: Run docker backend
+  ansible.builtin.shell:
+      cmd: "docker-compose -f {{ webdocker }}/docker-compose.yml up -d php-{{ (item.0.name == 'passport') | ternary('ap-backend', item.0.name) }}-{{ item.1.name }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run docker mysql
+  ansible.builtin.shell:
+      cmd: "docker-compose -f {{ webdocker }}/docker-compose.yml up -d mysql-{{ (item.0.name == 'passport') | ternary('ap-backend', item.0.name) }}-{{ item.1.name }}"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Run docker RbbitMQ
+  ansible.builtin.shell:
+      cmd: "docker-compose -f {{ webdocker }}/docker-compose.yml up -d rabbitmq-{{ item.0.name }}-{{ item.1.name }}"
+  loop: "{{ services|subelements('environments') }}"
+  when: item.0.name == "publisher"
+
+- name: Run docker nginx
+  ansible.builtin.shell:
+      cmd: "docker-compose -f {{ webdocker }}/docker-compose.yml up -d nginx"
+
+- name: Get Docker container ID
+  command: "docker ps -qf 'name=webdocker-php-{{ (item.0.name == 'passport') | ternary('ap-backend', item.0.name) }}-'"
+  register: container_id
+  loop: "{{ services|subelements('environments') }}"
+  changed_when: False
+
+- name: Composer install
+  command: "docker exec {{ item.stdout }} composer install"
+  loop: "{{ container_id.results }}"
+
+- name: Doctrine Migrate
+  command: "docker exec {{ item.stdout }} php bin/console doctrine:migrations:migrate"
+  loop: "{{ container_id.results }}"
+
+- name: Generate a key pair
+  command: "docker exec {{ item.1.stdout }} php bin/console lexik:jwt:generate-keypair --overwrite"
+  when: item.0.0.name != 'verify'
+  loop: "{{ services|subelements('environments')|list | zip(container_id.results|list) | list }}"
+  loop_control:
+      label: "{{ item.0 }}"
+
+- name: Clean cache
+  command: "docker exec {{ item.stdout }} php bin/console cache:clear"
+  loop: "{{ container_id.results }}"

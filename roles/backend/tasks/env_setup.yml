@@ -1,0 +1,42 @@
+---
+
+- name: Check if Backend directories exists
+  stat:
+    path: "{{php_fpm}}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}"
+  register: project_dir
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create Backend directories
+  file:
+    path: "{{php_fpm}}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create Dockerfiles for Backend
+  template:
+    src: "Dockerfile_{{ item.0.name }}.j2"
+    dest: "{{php_fpm}}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}/Dockerfile"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create docker-php-ext.ini
+  template:
+    src: docker-php-ext.ini.j2
+    dest: "{{php_fpm }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}/docker-php-ext.ini"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create php-fpm.conf file
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{php_fpm }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}/php-fpm.conf"
+  loop: "{{ services|subelements('environments') }}"
+
+- name: Create .env
+  template:
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    src: ".{{ item.0.name }}.env.j2"
+    dest: "{{ app_root }}/{{ (item.0.name == 'passport') | ternary('ap-backend', 'api-' + item.0.name) }}-{{ item.1.name }}/.env"
+  loop: "{{ services|subelements('environments') }}"
